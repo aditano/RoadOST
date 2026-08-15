@@ -41,13 +41,15 @@ export class DriveRecorder {
 
   constructor(stream: MediaStream) {
     this.stream = stream;
-    this.mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+    this.mimeType =
+      typeof MediaRecorder !== "undefined" &&
+      MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
       ? "audio/webm;codecs=opus"
       : "audio/webm";
   }
 
   start(): boolean {
-    if (!("MediaRecorder" in window)) {
+    if (typeof MediaRecorder === "undefined") {
       return false;
     }
 

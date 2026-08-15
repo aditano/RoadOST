@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">RoadOST</title>
+  <desc id="desc">Your drive writes the score.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#071226"/>
+      <stop offset="0.72" stop-color="#1d3858"/>
+      <stop offset="1" stop-color="#9a6266"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#79b4ff" stop-opacity=".42"/>
+      <stop offset="1" stop-color="#07101d" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="word" x1="0" x2="1">
+      <stop offset="0" stop-color="#f4f7ff"/>
+      <stop offset=".7" stop-color="#f4f7ff"/>
+      <stop offset="1" stop-color="#6aaeff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#030711"/>
+  <rect width="1200" height="350" fill="url(#sky)"/>
+  <ellipse cx="600" cy="360" rx="520" ry="270" fill="url(#glow)"/>
+  <path d="M0 350L130 255 240 340 390 215 520 348 700 245 820 342 1030 205 1200 336V630H0Z" fill="#080d15"/>
+  <path d="M500 330H700L1090 630H110L500 330Z" fill="#11151d"/>
+  <path d="M598 352L602 352 608 414H592Z" fill="#d8e1f1" opacity=".85"/>
+  <path d="M584 466H616L642 630H558Z" fill="#d8e1f1" opacity=".85"/>
+  <rect x="68" y="64" width="1064" height="502" rx="18" fill="none" stroke="#91add8" stroke-opacity=".2"/>
+  <text x="92" y="135" fill="url(#word)" font-family="Inter,Arial,sans-serif" font-size="48" font-weight="800">RoadOST</text>
+  <text x="92" y="216" fill="#f4f7ff" font-family="Inter,Arial,sans-serif" font-size="68" font-weight="750">Your drive writes the score.</text>
+  <text x="94" y="262" fill="#9aabc3" font-family="Inter,Arial,sans-serif" font-size="24">Live cinematic rock, shaped by the road in your browser.</text>
+  <rect x="92" y="494" width="225" height="48" rx="7" fill="#eaf2ff"/>
+  <text x="118" y="526" fill="#07101c" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="700">OPEN DRIVE STUDIO</text>
+</svg>

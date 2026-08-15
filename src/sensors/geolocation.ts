@@ -4,6 +4,7 @@ import type { SourceState } from "./types";
 export type GeoSnapshot = {
   speedMps: number | null;
   headingDeg: number | null;
+  headingRate: number | null;
   latitude: number | null;
   longitude: number | null;
   source: SourceState;
@@ -39,10 +40,12 @@ export class GeolocationSource {
   private snapshot: GeoSnapshot = {
     speedMps: null,
     headingDeg: null,
+    headingRate: null,
     latitude: null,
     longitude: null,
     source: "missing"
   };
+  private previousHeading: { headingDeg: number; tMs: number } | null = null;
 
   start(): void {
     if (!("geolocation" in navigator)) {
@@ -79,6 +82,17 @@ export class GeolocationSource {
     const lon = position.coords.longitude;
     const tMs = position.timestamp;
     const headingDeg = Number.isFinite(position.coords.heading) ? position.coords.heading : null;
+    let headingRate: number | null = null;
+    if (headingDeg !== null && this.previousHeading) {
+      const dt = (tMs - this.previousHeading.tMs) / 1000;
+      if (dt > 0) {
+        const rawDelta = Math.abs(headingDeg - this.previousHeading.headingDeg);
+        headingRate = Math.min(rawDelta, 360 - rawDelta) / dt;
+      }
+    }
+    if (headingDeg !== null) {
+      this.previousHeading = { headingDeg, tMs };
+    }
 
     const liveSpeed = Number.isFinite(position.coords.speed) ? position.coords.speed : null;
     let derivedSpeed = liveSpeed;
@@ -96,6 +110,7 @@ export class GeolocationSource {
     this.snapshot = {
       speedMps: derivedSpeed === null ? null : clamp(derivedSpeed, 0, 50),
       headingDeg,
+      headingRate,
       latitude: lat,
       longitude: lon,
       source: "live"

@@ -6,18 +6,40 @@ export type SimulatorPresetId =
   | "sunny-neighborhood"
   | "dawn-commute"
   | "tunnel-blast"
-  | "storm-crawl";
+  | "storm-crawl"
+  | "midnight-city"
+  | "mountain-descent"
+  | "heatwave"
+  | "blizzard"
+  | "late-ferry";
+
+export const SIMULATOR_PRESET_IDS: readonly SimulatorPresetId[] = [
+  "night-rain-highway",
+  "sunny-neighborhood",
+  "dawn-commute",
+  "tunnel-blast",
+  "storm-crawl",
+  "midnight-city",
+  "mountain-descent",
+  "heatwave",
+  "blizzard",
+  "late-ferry"
+];
 
 export type SimulatorState = {
   speedMps: number;
   accelMps2: number;
   headingDeg: number;
+  headingRate: number;
   lux: number;
   hourLocal: number;
   precipMmHr: number;
   cloud: number;
   tempC: number;
   weatherCode: number;
+  windMps: number;
+  visibility: number;
+  presetId: SimulatorPresetId;
   timelineSec: number;
   timelinePlaying: boolean;
 };
@@ -26,12 +48,15 @@ type PresetDefinition = {
   speedMps: number;
   accelMps2: number;
   headingDeg: number;
+  headingRate: number;
   lux: number;
   hourLocal: number;
   precipMmHr: number;
   cloud: number;
   tempC: number;
   weatherCode: number;
+  windMps: number;
+  visibility: number;
 };
 
 const SIM_TIMELINE_SECONDS = 90;
@@ -41,56 +66,141 @@ const PRESETS: Record<SimulatorPresetId, PresetDefinition> = {
     speedMps: 31.3,
     accelMps2: 1.8,
     headingDeg: 250,
+    headingRate: 2,
     lux: 40,
     hourLocal: 22.5,
     precipMmHr: 5.8,
     cloud: 0.95,
     tempC: 8,
-    weatherCode: 82
+    weatherCode: 82,
+    windMps: 13,
+    visibility: 2400
   },
   "sunny-neighborhood": {
     speedMps: 11.2,
     accelMps2: 0.45,
     headingDeg: 100,
+    headingRate: 8,
     lux: 28000,
     hourLocal: 13.5,
     precipMmHr: 0,
     cloud: 0.1,
     tempC: 24,
-    weatherCode: 0
+    weatherCode: 0,
+    windMps: 2,
+    visibility: 24000
   },
   "dawn-commute": {
     speedMps: 21,
     accelMps2: 0.9,
     headingDeg: 80,
+    headingRate: 12,
     lux: 4200,
     hourLocal: 6.5,
     precipMmHr: 0.1,
     cloud: 0.35,
     tempC: 14,
-    weatherCode: 2
+    weatherCode: 2,
+    windMps: 5,
+    visibility: 18000
   },
   "tunnel-blast": {
     speedMps: 26.8,
     accelMps2: 1.2,
     headingDeg: 190,
+    headingRate: 3,
     lux: 16000,
     hourLocal: 15,
     precipMmHr: 0,
     cloud: 0.2,
     tempC: 19,
-    weatherCode: 1
+    weatherCode: 1,
+    windMps: 4,
+    visibility: 14000
   },
   "storm-crawl": {
     speedMps: 6.7,
     accelMps2: 0.5,
     headingDeg: 320,
+    headingRate: 18,
     lux: 350,
     hourLocal: 19.2,
     precipMmHr: 3.4,
     cloud: 1,
     tempC: 10,
-    weatherCode: 95
+    weatherCode: 95,
+    windMps: 16,
+    visibility: 1100
+  },
+  "midnight-city": {
+    speedMps: 19.5,
+    accelMps2: 1.35,
+    headingDeg: 35,
+    headingRate: 24,
+    lux: 180,
+    hourLocal: 0.5,
+    precipMmHr: 0,
+    cloud: 0.3,
+    tempC: 16,
+    weatherCode: 1,
+    windMps: 4.5,
+    visibility: 18000
+  },
+  "mountain-descent": {
+    speedMps: 24,
+    accelMps2: 1.7,
+    headingDeg: 145,
+    headingRate: 42,
+    lux: 7500,
+    hourLocal: 17.8,
+    precipMmHr: 0.2,
+    cloud: 0.4,
+    tempC: 9,
+    weatherCode: 2,
+    windMps: 9,
+    visibility: 12000
+  },
+  heatwave: {
+    speedMps: 28.5,
+    accelMps2: 1.1,
+    headingDeg: 270,
+    headingRate: 6,
+    lux: 22000,
+    hourLocal: 18.6,
+    precipMmHr: 0,
+    cloud: 0.05,
+    tempC: 38,
+    weatherCode: 0,
+    windMps: 3,
+    visibility: 28000
+  },
+  blizzard: {
+    speedMps: 14,
+    accelMps2: 1.15,
+    headingDeg: 10,
+    headingRate: 14,
+    lux: 480,
+    hourLocal: 15.2,
+    precipMmHr: 3.1,
+    cloud: 1,
+    tempC: -8,
+    weatherCode: 75,
+    windMps: 19,
+    visibility: 320
+  },
+  "late-ferry": {
+    speedMps: 7.4,
+    accelMps2: 0.18,
+    headingDeg: 60,
+    headingRate: 1,
+    lux: 55,
+    hourLocal: 23.4,
+    precipMmHr: 0.25,
+    cloud: 0.72,
+    tempC: 11,
+    weatherCode: 51,
+    windMps: 11,
+    visibility: 7000
   }
 };
 
@@ -136,6 +246,7 @@ const timelineWeatherCode = (rainMmHr: number): number => {
 export class SimulatorController {
   private state: SimulatorState = {
     ...PRESETS["night-rain-highway"],
+    presetId: "night-rain-highway",
     timelineSec: 0,
     timelinePlaying: false
   };
@@ -147,14 +258,15 @@ export class SimulatorController {
   }
 
   listPresetIds(): SimulatorPresetId[] {
-    return Object.keys(PRESETS) as SimulatorPresetId[];
+    return [...SIMULATOR_PRESET_IDS];
   }
 
   applyPreset(id: SimulatorPresetId): void {
     const preset = PRESETS[id];
     this.state = {
       ...this.state,
-      ...preset
+      ...preset,
+      presetId: id
     };
     if (id === "tunnel-blast") {
       this.triggerTunnelBlast();
@@ -206,6 +318,7 @@ export class SimulatorController {
       speedMps: this.state.speedMps,
       accelMps2: this.state.accelMps2,
       headingDeg: this.state.headingDeg,
+      headingRate: this.state.headingRate,
       lux,
       hourLocal: this.state.hourLocal,
       weather,
@@ -224,7 +337,9 @@ export class SimulatorController {
       precipMmHr: this.state.precipMmHr,
       cloud: clamp01(this.state.cloud),
       tempC: this.state.tempC,
-      isNight: this.state.hourLocal < 5 || this.state.hourLocal >= 21
+      isNight: this.state.hourLocal < 5 || this.state.hourLocal >= 21,
+      windMps: this.state.windMps,
+      visibility: this.state.visibility
     };
   }
 
@@ -260,34 +375,34 @@ export class SimulatorController {
 
   private applyTimeline(sec: number): void {
     const speed = envelope(sec, [
-      { t: 0, v: 8 },
-      { t: 16, v: 20 },
-      { t: 30, v: 31 },
-      { t: 48, v: 12 },
-      { t: 60, v: 26 },
+      { t: 0, v: 31.3 },
+      { t: 16, v: 25 },
+      { t: 30, v: 12 },
+      { t: 48, v: 27 },
+      { t: 60, v: 9 },
       { t: 78, v: 33 },
       { t: 90, v: 17 }
     ]);
     const rain = envelope(sec, [
-      { t: 0, v: 0 },
-      { t: 20, v: 1.2 },
-      { t: 36, v: 4.8 },
-      { t: 56, v: 2.1 },
-      { t: 76, v: 0.3 },
+      { t: 0, v: 5.8 },
+      { t: 20, v: 3.2 },
+      { t: 36, v: 0.3 },
+      { t: 56, v: 0 },
+      { t: 76, v: 4.4 },
       { t: 90, v: 0.8 }
     ]);
     const lux = envelope(sec, [
-      { t: 0, v: 25000 },
-      { t: 26, v: 14000 },
-      { t: 40, v: 600 },
+      { t: 0, v: 40 },
+      { t: 26, v: 500 },
+      { t: 40, v: 12000 },
       { t: 52, v: 80 },
       { t: 67, v: 9000 },
-      { t: 90, v: 18000 }
+      { t: 90, v: 3500 }
     ]);
     const hour = envelope(sec, [
-      { t: 0, v: 15.4 },
-      { t: 26, v: 18.2 },
-      { t: 52, v: 21.5 },
+      { t: 0, v: 22.5 },
+      { t: 26, v: 23.2 },
+      { t: 52, v: 1.5 },
       { t: 90, v: 6.2 }
     ]);
     const accel = envelope(sec, [
@@ -304,6 +419,9 @@ export class SimulatorController {
     this.state.lux = lux;
     this.state.hourLocal = hour % 24;
     this.state.accelMps2 = accel;
+    this.state.headingRate = clamp(4 + Math.abs(accel) * 12, 0, 90);
+    this.state.windMps = 3 + rain * 2.2;
+    this.state.visibility = Math.max(700, 24000 - rain * 4200);
     this.state.cloud = clamp01(rain > 0.5 ? 0.85 : rain > 0.1 ? 0.5 : 0.2);
   }
 }

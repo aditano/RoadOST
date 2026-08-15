@@ -1,6 +1,16 @@
 import type { FeatureFrame, MixState } from "../sensors/types";
 
-const CHIP_KEYS = ["speed", "energy", "rain", "light", "weather", "bpm", "palette"] as const;
+const CHIP_KEYS = [
+  "speed",
+  "energy",
+  "rain",
+  "light",
+  "weather",
+  "bpm",
+  "palette",
+  "section",
+  "wind"
+] as const;
 type ChipKey = (typeof CHIP_KEYS)[number];
 
 type ChipElementMap = Record<ChipKey, HTMLElement>;
@@ -18,7 +28,7 @@ export class Hud {
       (key) => `
       <article class="chip" data-chip="${key}">
         <div class="chip-key">${key.toUpperCase()}</div>
-        <div class="chip-value">-</div>
+        <div class="chip-value">–</div>
       </article>
     `
     ).join("");
@@ -35,7 +45,7 @@ export class Hud {
   }
 
   render(frame: FeatureFrame, mix: MixState): void {
-    this.chips.speed.textContent = `${(frame.speedMps ?? 0).toFixed(1)} m/s · ${sourceBadge(frame.source.geo)}`;
+    this.chips.speed.textContent = `${((frame.speedMps ?? 0) * 2.23694).toFixed(0)} mph · ${sourceBadge(frame.source.geo)}`;
     this.chips.energy.textContent = `${mix.energy.toFixed(2)} · ${sourceBadge(frame.source.motion)}`;
     this.chips.rain.textContent = `${mix.rain.toFixed(2)} · ${sourceBadge(frame.source.weather)}`;
     this.chips.light.textContent = `${(frame.lux ?? 0).toFixed(0)} lux · ${sourceBadge(frame.source.light)}`;
@@ -44,5 +54,7 @@ export class Hud {
       : "missing";
     this.chips.bpm.textContent = `${mix.bpm.toFixed(0)} bpm`;
     this.chips.palette.textContent = mix.palette;
+    this.chips.section.textContent = mix.section;
+    this.chips.wind.textContent = `${(frame.weather?.windMps ?? 0).toFixed(1)} m/s`;
   }
 }

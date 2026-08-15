@@ -1,0 +1,17 @@
+{
+  "name": "RoadOST",
+  "short_name": "RoadOST",
+  "description": "A browser-based live cinematic rock score shaped by your drive.",
+  "start_url": "/RoadOST/",
+  "scope": "/RoadOST/",
+  "display": "browser",
+  "background_color": "#030711",
+  "theme_color": "#030711",
+  "icons": [
+    {
+      "src": "/RoadOST/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

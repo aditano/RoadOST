@@ -100,6 +100,7 @@ export class FeatureBus {
       speedMps: geoSnapshot.speedMps,
       accelMps2: motionSnapshot.accelRmsMps2,
       headingDeg: geoSnapshot.headingDeg,
+      headingRate: geoSnapshot.headingRate,
       lux: computedLux,
       hourLocal,
       weather,

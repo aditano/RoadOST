@@ -7,6 +7,7 @@ const baseFrame = (overrides: Partial<FeatureFrame> = {}): FeatureFrame => ({
   speedMps: 0,
   accelMps2: 0,
   headingDeg: 0,
+  headingRate: 0,
   lux: 500,
   hourLocal: 12,
   weather: {
@@ -14,7 +15,8 @@ const baseFrame = (overrides: Partial<FeatureFrame> = {}): FeatureFrame => ({
     precipMmHr: 0,
     cloud: 0.05,
     tempC: 20,
-    isNight: false
+    isNight: false,
+    windMps: 0
   },
   source: {
     geo: "sim",
@@ -50,7 +52,8 @@ describe("Mapper", () => {
           precipMmHr: 0.4,
           cloud: 0.8,
           tempC: 12,
-          isNight: false
+          isNight: false,
+          windMps: 8
         }
       })
     );
@@ -66,7 +69,14 @@ describe("Mapper", () => {
     const night = mapperNight.update(
       baseFrame({
         hourLocal: 23,
-        weather: { code: 0, precipMmHr: 0, cloud: 0.05, tempC: 14, isNight: true }
+        weather: {
+          code: 0,
+          precipMmHr: 0,
+          cloud: 0.05,
+          tempC: 14,
+          isNight: true,
+          windMps: 1
+        }
       })
     );
 
@@ -94,6 +104,7 @@ describe("Mapper", () => {
         speedMps: null,
         accelMps2: null,
         headingDeg: null,
+        headingRate: null,
         lux: null,
         weather: null,
         source: {

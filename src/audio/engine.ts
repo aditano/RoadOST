@@ -23,6 +23,8 @@ export class RoadOstEngine {
   private settings: EngineSettings = { ...DEFAULT_SETTINGS };
   private started = false;
   private sessionPalette: MixPalette = "night";
+  private activeShapeId = "night:none";
+  private firstMix = true;
 
   constructor() {
     this.masterGain.chain(this.limiter, Tone.Destination);
@@ -39,6 +41,7 @@ export class RoadOstEngine {
     this.layers.start();
     Tone.Transport.start("+0.05");
     this.started = true;
+    this.firstMix = true;
   }
 
   stop(): void {
@@ -52,12 +55,20 @@ export class RoadOstEngine {
   }
 
   applyMix(mix: MixState): void {
+    if (this.firstMix) {
+      this.sessionPalette = mix.palette;
+      this.firstMix = false;
+    }
     const palette = this.settings.holdKey ? this.sessionPalette : mix.palette;
     if (!this.settings.holdKey) {
       this.sessionPalette = mix.palette;
     }
 
-    this.layers.setShape(getPaletteShape(palette));
+    const shapeId = `${palette}:${mix.overlay ?? "none"}`;
+    if (shapeId !== this.activeShapeId) {
+      this.layers.setShape(getPaletteShape(palette, mix.overlay));
+      this.activeShapeId = shapeId;
+    }
     this.layers.setMix({ ...mix, palette });
     Tone.Transport.bpm.rampTo(mix.bpm, 0.3);
   }

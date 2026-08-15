@@ -1,4 +1,4 @@
-import type { MixPalette } from "../sensors/types";
+import type { MixPalette, PaletteOverlay } from "../sensors/types";
 
 export type PaletteShape = {
   keyLabel: string;
@@ -86,4 +86,33 @@ const PALETTES: Record<MixPalette, PaletteShape> = {
   }
 };
 
-export const getPaletteShape = (palette: MixPalette): PaletteShape => PALETTES[palette];
+const rotate = <T>(values: T[], amount: number): T[] => [
+  ...values.slice(amount),
+  ...values.slice(0, amount)
+];
+
+export const getPaletteShape = (
+  palette: MixPalette,
+  overlay: PaletteOverlay | null = null
+): PaletteShape => {
+  const base = PALETTES[palette];
+  if (!overlay) {
+    return base;
+  }
+
+  if (overlay === "storm") {
+    return {
+      keyLabel: `${base.keyLabel}, storm`,
+      bassPattern: rotate(base.bassPattern, 4),
+      leadPattern: [...base.leadPattern].reverse(),
+      chordProgressions: [...base.chordProgressions].reverse()
+    };
+  }
+
+  return {
+    keyLabel: `${base.keyLabel}, gold`,
+    bassPattern: rotate(base.bassPattern, 2),
+    leadPattern: rotate(base.leadPattern, 3),
+    chordProgressions: base.chordProgressions.map((progression) => rotate(progression, 1))
+  };
+};

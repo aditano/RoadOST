@@ -1,4 +1,9 @@
-import type { FeatureFrame, MixPalette, WeatherFrame } from "../sensors/types";
+import type {
+  FeatureFrame,
+  MixPalette,
+  PaletteOverlay,
+  WeatherFrame
+} from "../sensors/types";
 
 export const clamp01 = (value: number): number => Math.min(1, Math.max(0, value));
 
@@ -61,6 +66,30 @@ export const rainFromWeather = (weather: WeatherFrame | null): number => {
   const precipComponent = smoothstep(weather.precipMmHr, 0, 7);
   const codeBoost = isRainCode(weather.code) ? 0.62 : 0;
   return clamp01(Math.max(precipComponent, codeBoost));
+};
+
+export const windFromWeather = (weather: WeatherFrame | null): number =>
+  smoothstep(weather?.windMps ?? 0, 2, 20);
+
+export const overlayFromFrame = (
+  frame: FeatureFrame,
+  palette: MixPalette,
+  rain: number,
+  wind: number
+): PaletteOverlay | null => {
+  const code = frame.weather?.code ?? 0;
+  const snow = code >= 71 && code <= 77;
+  if (rain > 0.55 || snow || code >= 95 || (wind > 0.7 && (frame.weather?.cloud ?? 0) > 0.7)) {
+    return "storm";
+  }
+  if (
+    palette === "dusk" &&
+    rain < 0.2 &&
+    (frame.weather?.tempC ?? 0) >= 26
+  ) {
+    return "gold";
+  }
+  return null;
 };
 
 export const brightnessFromFrame = (

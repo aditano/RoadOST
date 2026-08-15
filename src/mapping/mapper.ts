@@ -1,13 +1,16 @@
 import type { FeatureFrame, MixState } from "../sensors/types";
+import { ArrangementEngine } from "../audio/arrange";
 import {
   brightnessFromFrame,
   clamp01,
   lerp,
   normalizedAccel,
   normalizedSpeed,
+  overlayFromFrame,
   paletteFromHour,
   rainFromWeather,
-  smoothstep
+  smoothstep,
+  windFromWeather
 } from "./features";
 
 const ATTACK_SECONDS = 0.6;
@@ -29,6 +32,7 @@ export class Mapper {
   private lastTimeMs: number | null = null;
   private lastLux: number | null = null;
   private lastLuxTimeMs: number | null = null;
+  private readonly arrangement = new ArrangementEngine();
 
   update(frame: FeatureFrame): MixState {
     const nowMs = Number.isFinite(frame.t) ? frame.t : performance.now();
@@ -39,6 +43,7 @@ export class Mapper {
     const speedNorm = normalizedSpeed(frame.speedMps);
     const accelNorm = normalizedAccel(frame.accelMps2);
     const rain = rainFromWeather(frame.weather);
+    const wind = windFromWeather(frame.weather);
 
     const rawEnergy = clamp01(speedNorm * 0.7 + accelNorm * 0.3);
     const tau = rawEnergy > this.energy ? ATTACK_SECONDS : RELEASE_SECONDS;
@@ -55,15 +60,29 @@ export class Mapper {
     this.tunnel = mapTunnelDecay(this.tunnel, dtSec);
     this.detectTunnel(frame, nowMs);
 
+    const bpm = lerp(92, 164, smoothstep(frame.speedMps ?? 0, 4, 33));
+    const arrangement = this.arrangement.update(nowMs, bpm, {
+      energy: this.energy,
+      tunnel: this.tunnel
+    });
+    const headingFill = smoothstep(frame.headingRate ?? 0, 12, 70) * 0.28;
+    const overlay = overlayFromFrame(frame, palette, rain, wind);
+    const weatherCode = frame.weather?.code ?? 0;
+
     return {
-      bpm: lerp(92, 164, smoothstep(frame.speedMps ?? 0, 4, 33)),
+      bpm,
       energy: this.energy,
       density,
       brightness,
       crunch,
       rain,
       tunnel: this.tunnel,
-      palette
+      wind,
+      fill: clamp01(Math.max(arrangement.fill, headingFill)),
+      thunder: weatherCode >= 95 && weatherCode <= 99 ? 1 : 0,
+      section: arrangement.section,
+      palette,
+      overlay
     };
   }
 

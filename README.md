@@ -1,97 +1,56 @@
 # RoadOST
 
-RoadOST is a browser app that turns your drive into a live rock and cinematic score by mixing synthesized layers in real time.
+RoadOST is a website. [Open the live demo](https://aditano.github.io/RoadOST/) in a browser and start driving. There is no native app to install, no account, and no API key.
 
-RoadOST is not a live Suno or MusicGen song generator. It does not stream full songs from a model. It uses a game-audio style stem mixer driven by sensor features.
+It turns speed, motion, heading, light, time, and weather into a live classic rock and cinematic score. Pair a phone to the car over Bluetooth, tap **Start score**, and the synthesized arrangement responds to the road.
 
-Live demo: [https://aditano.github.io/RoadOST/](https://aditano.github.io/RoadOST/)
+RoadOST is not a live song generator. It does not call Suno, MusicGen, or another hosted model. It uses a low-latency game-audio style stem mixer built with Tone.js.
 
-## Stack
+## Landing page and drive studio
 
-- Vite 6
-- TypeScript (strict)
-- Vanilla TypeScript UI
-- Tone.js on Web Audio API
-- Vitest
+The default URL opens a product landing page:
 
-## Run locally
+- [https://aditano.github.io/RoadOST/](https://aditano.github.io/RoadOST/)
 
-```bash
-npm install
-npm run dev
-```
+The drive studio is one click away, or it can be opened directly:
 
-Build and test:
+- [https://aditano.github.io/RoadOST/?view=studio](https://aditano.github.io/RoadOST/?view=studio)
+- [90 second simulator demo](https://aditano.github.io/RoadOST/?view=studio&sim=1&preset=night-rain-highway&demo=1)
 
-```bash
-npm test
-npm run build
-```
+The studio includes Live and Simulator modes, a road-horizon visualizer, sensor HUD, ten simulator presets, a 90 second timeline, audio export, recap, and compact share links.
 
-## Sensor permissions and platform notes
+## Mapping and arrangement
 
-- `Start score` is a user gesture and is required before Web Audio starts.
-- iOS Safari requires motion permission for `DeviceMotionEvent`. The app requests this on start.
-- Geolocation requires HTTPS on mobile browsers. On localhost it works in modern browsers.
-- If live geolocation is unavailable, the app switches to Simulator mode for demo continuity.
-- Ambient light sensor is only available in some Chromium environments. If missing, the app estimates lux from hour and cloud cover while still marking light as missing.
-
-## What it does
-
-- Fuses speed, acceleration, heading, light, local hour, and weather into a `FeatureFrame` at about 20 Hz.
-- Maps features to `MixState` (`bpm`, `energy`, `density`, `brightness`, `crunch`, `rain`, `tunnel`, `palette`).
-- Drives six synthesized layers: drums, bass, crunch guitar, pad, lead, and weather bed.
-- Includes a first-class Simulator with presets and a 90 second timeline scrub/playback.
-- Supports recording through `MediaRecorder` from a captured audio destination.
-
-## Architecture
-
-```mermaid
-flowchart LR
-  subgraph Sensors
-    G[Geolocation]
-    M[Motion]
-    L[Light]
-    C[Clock]
-    W[Weather Open-Meteo]
-    S[Simulator]
-  end
-
-  G --> B
-  M --> B
-  L --> B
-  C --> B
-  W --> B
-  S --> B
-
-  B[Feature Bus 20Hz] --> F[FeatureFrame]
-  F --> MP[Mapper]
-  MP --> MX[MixState]
-  MX --> AE[Audio Engine Tone.js]
-  AE --> OUT[Web Audio Destination]
-  AE --> REC[MediaStreamDestination]
-  REC --> MR[MediaRecorder export]
-  F --> UI[HUD and Visualizer]
-  MX --> UI
-```
-
-## Taste and mapping table
-
-| Input signal | Mapping effect |
+| Road signal | Musical response |
 | --- | --- |
-| Speed (m/s) | BPM from 92 to 164 via smoothstep, speed-heavy energy contribution |
-| Acceleration RMS | Adds aggression to energy and crunch |
-| Rain and weather code | Raises rain layer and texture hats, darkens brightness |
-| Hour and isNight | Selects palette (`dawn`, `day`, `dusk`, `night`) and brightness baseline |
-| Lux drop | Tunnel spike to 1.0 with 8 second decay |
-| Energy | Controls density and lead entry threshold |
+| Speed | BPM from 92 to 164, plus most of the energy signal |
+| Acceleration RMS | Adds energy, crunch, and attack |
+| Heading rate | Adds small fill bias and stereo movement |
+| Rain and weather code | Adds hats and weather texture, reduces lead clutter, darkens tone |
+| Wind | Opens a filtered wind bed |
+| Local hour | Selects the key center: dawn A minor, day E minor, dusk F# minor, night D minor |
+| Sunset heat | Adds the optional `gold` palette overlay |
+| Storm, snow, or heavy rain | Adds the optional `storm` palette overlay |
+| Fast lux drop | Forces a two-bar tunnel break and opens the filtered pad |
+| Energy under 0.28 | Holds a verse or break |
+| Energy 0.28 to 0.55 | Selects verse |
+| Energy 0.55 to 0.75 | Selects lift |
+| Energy over 0.75 | Selects chorus and enables the sub-bass voice |
+| Two-bar energy swing over 0.18 at an eight-bar boundary | Fires a one-bar tom and crash fill |
 
-Palette keys:
+Every session begins with an eight-bar intro. Sections normally hold for at least four bars. Tunnel spikes are the exception and force a two-bar break. Highways or choruses add sub bass, chorus entries add a filtered riser, thunderstorms add a rare thunder tick, and rain over 0.45 thickens the hats and weather bed.
 
-- Dawn: A minor
-- Day: E minor
-- Dusk: F# minor
-- Night: D minor
+## URL flags
+
+| Flag | Effect |
+| --- | --- |
+| `?view=studio` | Skip the landing page |
+| `#studio` | Also opens the studio |
+| `?sim=1` | Open the studio in Simulator mode |
+| `?preset=night-rain-highway` | Restore a simulator preset |
+| `?demo=1` | Start the 90 second timeline after the first Start tap |
+
+Share links contain only the view, mode, and preset. They do not contain a drive trace or recap data.
 
 ## Simulator presets
 
@@ -100,14 +59,90 @@ Palette keys:
 - Dawn commute
 - Tunnel blast
 - Storm crawl
+- Midnight city
+- Mountain descent
+- Heatwave
+- Blizzard
+- Late ferry
 
-These presets are intentionally different in speed, rain, light, and hour so the resulting mix is audibly different in bpm, density, brightness, and wet texture.
+The presets differ in speed, acceleration, light, weather, wind, visibility, palette overlay, tempo, brightness, and section tendency.
 
-## Safety behavior
+## Recap, storage, and export
 
-- While driving is active (`speed > 4 m/s`), settings and simulator controls are hidden and non-interactive.
-- Stop remains available as the only intentional driving action.
+Stopping or saving a drive creates a recap with duration, average and peak speed, peak energy, dominant palette, rain fraction, and section timeline. The latest ten recaps are kept locally under `roadost.recaps.v1` in `localStorage`.
+
+**Save this drive** records the browser audio graph with `MediaRecorder` and downloads a WebM audio file when supported. Settings for volume, held key, reduced motion, and last view also stay in local browser storage.
+
+## Run locally
+
+Requirements: Node.js 20 or newer and npm.
+
+```bash
+npm install
+npm run dev
+```
+
+Vite serves the project at `http://localhost:5173/RoadOST/` because the production Pages base remains `/RoadOST/`.
+
+Verify a change with:
+
+```bash
+npm test
+npm run build
+```
+
+## Sensor notes
+
+- Browser audio starts only after a user tap.
+- Geolocation requires HTTPS outside localhost. Speed comes from `coords.speed` when available, or distance over time as a fallback.
+- iOS Safari requires a user gesture before requesting `DeviceMotionEvent` permission.
+- Ambient Light Sensor support is limited, mostly to some Chromium environments. When it is missing, RoadOST estimates light from time and cloud cover while labeling the light source as missing.
+- Open-Meteo provides temperature, weather code, precipitation, cloud cover, day state, wind, and optional visibility without an API key. Weather failures are soft.
+- If live geolocation remains unavailable, the studio switches to Simulator mode and says so.
+- Sensor availability differs by phone, browser, permissions, and mounting position. The HUD labels every signal as live, simulated, or missing.
+- While a live drive is running above 4 m/s, interactive chrome is hidden and the giant Stop control remains.
+
+## Architecture
+
+```mermaid
+flowchart LR
+  subgraph Browser inputs
+    G[Geolocation]
+    M[Motion]
+    L[Light]
+    C[Clock]
+    W[Open-Meteo]
+    S[Simulator]
+  end
+
+  G --> B[Feature bus at 20 Hz]
+  M --> B
+  L --> B
+  C --> B
+  W --> B
+  S --> B
+  B --> F[FeatureFrame]
+  F --> MP[Mapper]
+  MP --> A[Arrangement engine]
+  A --> X[MixState]
+  X --> T[Tone.js layer rack]
+  T --> O[Web Audio output]
+  T --> R[MediaRecorder]
+  F --> UI[HUD and horizon]
+  X --> UI
+  X --> RC[Local recap]
+```
+
+The production build is a static Vite site deployed by GitHub Actions to GitHub Pages. There is no backend, analytics, account system, or live music-generation service.
+
+## Keyboard controls
+
+- `Space`: start or stop when focus is not in a control
+- `1` through `9`: select the first nine simulator presets
+- `L`: Live mode
+- `S`: Simulator mode
+- `Esc`: return to the landing page
 
 ## License
 
-MIT. See [`LICENSE`](./LICENSE).
+MIT. See [LICENSE](./LICENSE).

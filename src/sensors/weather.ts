@@ -34,7 +34,7 @@ const buildUrl = (latitude: number, longitude: number): string => {
   const search = new URLSearchParams({
     latitude: latitude.toString(),
     longitude: longitude.toString(),
-    current: "temperature_2m,weather_code,precipitation,cloud_cover,is_day"
+    current: "temperature_2m,weather_code,precipitation,cloud_cover,is_day,wind_speed_10m,visibility"
   });
   return `https://api.open-meteo.com/v1/forecast?${search.toString()}`;
 };
@@ -46,6 +46,8 @@ type OpenMeteoResponse = {
     precipitation?: number;
     cloud_cover?: number;
     is_day?: number;
+    wind_speed_10m?: number;
+    visibility?: number;
   };
 };
 
@@ -110,7 +112,13 @@ export class WeatherSource {
           precipMmHr: Number.isFinite(current.precipitation) ? current.precipitation ?? 0 : 0,
           cloud: clamp01((current.cloud_cover ?? 0) / 100),
           tempC: Number.isFinite(current.temperature_2m) ? current.temperature_2m ?? 0 : 0,
-          isNight: current.is_day === 0
+          isNight: current.is_day === 0,
+          windMps: Number.isFinite(current.wind_speed_10m)
+            ? Math.max(0, current.wind_speed_10m ?? 0) / 3.6
+            : 0,
+          visibility: Number.isFinite(current.visibility)
+            ? Math.max(0, current.visibility ?? 0)
+            : undefined
         },
         source,
         updatedAtMs: performance.now()
