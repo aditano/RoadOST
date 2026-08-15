@@ -1,0 +1,9 @@
+---
+description: RoadOST product constraints
+alwaysApply: true
+---
+
+RoadOST is a live stem-mixer drive soundtrack, not a Suno wrapper.
+Follow SPEC.md. Vanilla Vite + TypeScript + Tone.js. No React.
+No em dashes in user-facing copy. No copyrighted stems.
+Simulator is first-class. Tests for mapper.ts must pass.
