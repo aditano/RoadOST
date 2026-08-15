@@ -1,0 +1,234 @@
+:root {
+  color-scheme: dark;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #04070e;
+  color: #e8edff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 700px at 18% 12%, rgba(58, 84, 160, 0.3), transparent 60%),
+    radial-gradient(900px 500px at 85% 80%, rgba(95, 45, 112, 0.25), transparent 58%),
+    #04070e;
+  color: #e8edff;
+}
+
+#app {
+  width: min(1080px, 100%);
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2rem;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.topbar {
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(147, 167, 255, 0.22);
+  border-radius: 14px;
+  background: rgba(7, 10, 20, 0.78);
+}
+
+.wordmark {
+  font-size: clamp(1.6rem, 2.2vw, 2.2rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.tagline {
+  margin: 0.4rem 0 0;
+  color: #c6d1ff;
+}
+
+.mode-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+
+.mode-btn {
+  border: 1px solid rgba(175, 189, 255, 0.45);
+  background: rgba(30, 37, 70, 0.5);
+  color: #d6e0ff;
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+  cursor: pointer;
+}
+
+.mode-btn.active {
+  background: rgba(92, 151, 255, 0.8);
+  color: #00122a;
+  border-color: transparent;
+}
+
+.status-line {
+  margin: 0.75rem 0 0;
+  color: #b3bfd8;
+  font-size: 0.92rem;
+}
+
+.transport {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.cta {
+  border: none;
+  border-radius: 12px;
+  min-height: 60px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.cta.start {
+  background: linear-gradient(135deg, #69ffd2, #2cc0ac);
+  color: #032922;
+}
+
+.cta.stop {
+  background: linear-gradient(135deg, #ff9aa0, #fa4f57);
+  color: #330408;
+}
+
+.save-btn {
+  grid-column: 1 / -1;
+  min-height: 48px;
+  border: 1px solid rgba(166, 183, 255, 0.45);
+  border-radius: 10px;
+  background: rgba(19, 26, 52, 0.7);
+  color: #d7e3ff;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.settings,
+.sim-panel,
+.hud-section,
+.viz-section {
+  border: 1px solid rgba(146, 162, 235, 0.2);
+  border-radius: 14px;
+  background: rgba(7, 10, 20, 0.72);
+  padding: 0.85rem 1rem;
+}
+
+h2 {
+  margin: 0 0 0.65rem;
+  font-size: 1rem;
+  letter-spacing: 0.03em;
+  color: #d1dcff;
+}
+
+label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  margin: 0.55rem 0;
+  color: #d2d8f3;
+}
+
+input[type="range"] {
+  width: min(60%, 360px);
+}
+
+input[type="checkbox"] {
+  accent-color: #8cb0ff;
+}
+
+.sim-panel.disabled {
+  opacity: 0.5;
+}
+
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.5rem;
+}
+
+.preset-btn,
+.sim-actions button {
+  border: 1px solid rgba(164, 180, 255, 0.36);
+  background: rgba(18, 24, 52, 0.84);
+  color: #d9e2ff;
+  border-radius: 10px;
+  min-height: 36px;
+  cursor: pointer;
+}
+
+.sim-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.hidden-while-driving {
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+.hud {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.5rem;
+}
+
+.chip {
+  border-radius: 10px;
+  border: 1px solid rgba(173, 189, 255, 0.2);
+  background: rgba(17, 23, 47, 0.8);
+  padding: 0.45rem 0.55rem;
+}
+
+.chip-key {
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  color: #9fb0e8;
+}
+
+.chip-value {
+  margin-top: 0.2rem;
+  font-weight: 600;
+  color: #e2e9ff;
+}
+
+.viz {
+  width: 100%;
+  height: 120px;
+  border-radius: 10px;
+  border: 1px solid rgba(169, 187, 255, 0.2);
+  background: rgba(8, 11, 21, 0.7);
+}
+
+@media (min-width: 900px) {
+  .app-shell {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+
+  #controls-root {
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .hud-section,
+  .viz-section {
+    grid-column: 2;
+  }
+}
