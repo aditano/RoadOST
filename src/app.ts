@@ -12,6 +12,7 @@ import {
 } from "./share/url";
 import {
   createControls,
+  PRESET_LABELS,
   type ControlsHandle,
   type StudioSettings
 } from "./ui/controls";
@@ -46,6 +47,10 @@ const readSettings = (): StudioSettings => {
   } catch {
     return { ...DEFAULT_SETTINGS };
   }
+};
+
+const applyReducedMotion = (reduced: boolean): void => {
+  document.documentElement.classList.toggle("reduced-motion", reduced);
 };
 
 const writeSettings = (settings: StudioSettings): void => {
@@ -112,9 +117,9 @@ const landingMarkup = `
           <div class="preview-top"><span>ROADOST // LIVE</span><b>NIGHT RAIN HIGHWAY</b></div>
           <div class="preview-speed"><b>70</b><span>MPH</span></div>
           <div class="preview-section"><span>CHORUS</span><b>160 BPM</b></div>
+          <div class="floating-chip chip-energy"><span>ENERGY</span><b>92%</b></div>
+          <div class="floating-chip chip-rain"><span>RAIN BED</span><b>HEAVY</b></div>
         </div>
-        <div class="floating-chip chip-energy"><span>ENERGY</span><b>92%</b></div>
-        <div class="floating-chip chip-rain"><span>RAIN BED</span><b>HEAVY</b></div>
       </div>
     </section>
 
@@ -191,6 +196,7 @@ const landingMarkup = `
 
 export const mountApp = (root: HTMLElement): void => {
   let disposeView: () => void = () => undefined;
+  applyReducedMotion(readSettings().reducedMotion);
 
   const baseUrl = (): URL => new URL(import.meta.env.BASE_URL, window.location.origin);
 
@@ -235,17 +241,11 @@ export const mountApp = (root: HTMLElement): void => {
       <main class="studio-shell">
         <div id="controls-root" class="controls-column"></div>
         <div class="studio-data">
-          <section class="viz-section studio-card">
-            <div class="section-heading compact">
-              <div><p class="eyebrow">Live road</p><h2>Horizon</h2></div>
-              <span class="live-indicator"><i></i> Reactive</span>
-            </div>
+          <section class="viz-section studio-card" aria-label="Road horizon">
             <div id="viz-root"></div>
           </section>
-          <section class="hud-section studio-card">
-            <div class="section-heading compact">
-              <div><p class="eyebrow">Signal map</p><h2>Drive state</h2></div>
-            </div>
+          <section class="hud-section studio-card" aria-labelledby="hud-title">
+            <h2 id="hud-title" class="hud-title">Drive state</h2>
             <div id="hud-root"></div>
           </section>
         </div>
@@ -409,12 +409,14 @@ export const mountApp = (root: HTMLElement): void => {
           settings.reducedMotion = value;
           engine.updateSettings({ reducedMotion: value });
           visualizer.setReducedMotion(value);
+          applyReducedMotion(value);
           writeSettings(settings);
         },
         onPreset: (preset) => {
           simulator.applyPreset(preset);
           controls.syncSimulatorState(simulator.getState());
-          controls.setStatusText(`${preset.replaceAll("-", " ")} loaded.`);
+          const label = PRESET_LABELS.find((item) => item.id === preset)?.label ?? "Preset";
+          controls.setStatusText(`${label} loaded.`);
         },
         onSpeedMps: (value) => simulator.setSpeedMps(value),
         onRainMmHr: (value) => simulator.setRainMmHr(value),
@@ -463,12 +465,25 @@ export const mountApp = (root: HTMLElement): void => {
 
     const keyboardHandler = (event: KeyboardEvent): void => {
       const target = event.target as HTMLElement | null;
-      const editing =
-        target?.matches("input, textarea, select, button") || target?.isContentEditable === true;
-      if (editing) {
+      const inTextField =
+        target?.isContentEditable === true ||
+        target?.matches("textarea, select, input:not([type='range']):not([type='checkbox'])") ===
+          true;
+      if (inTextField) {
+        return;
+      }
+      const onClickable = target?.matches("button, a, summary") === true;
+      if (event.key === "Escape") {
+        if (running) {
+          finishSession();
+        }
+        navigate({ view: "landing", sim: false, preset: null, demo: false });
         return;
       }
       if (event.code === "Space") {
+        if (onClickable) {
+          return;
+        }
         event.preventDefault();
         controls.triggerTransport();
       } else if (/^Digit[1-9]$/.test(event.code) && mode === "sim") {
@@ -477,11 +492,6 @@ export const mountApp = (root: HTMLElement): void => {
         setMode("live");
       } else if (event.key.toLowerCase() === "s") {
         setMode("sim");
-      } else if (event.key === "Escape") {
-        if (running) {
-          finishSession();
-        }
-        navigate({ view: "landing", sim: false, preset: null, demo: false });
       }
     };
     window.addEventListener("keydown", keyboardHandler);

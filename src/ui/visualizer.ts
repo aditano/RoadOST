@@ -1,9 +1,20 @@
 import { clamp01 } from "../mapping/features";
 import type { FeatureFrame, MixState } from "../sensors/types";
 
+const METER_KEYS = ["energy", "density", "crunch", "rain", "brightness"] as const;
+
+const METER_LABELS: Record<(typeof METER_KEYS)[number], string> = {
+  energy: "Energy",
+  density: "Density",
+  crunch: "Crunch",
+  rain: "Rain",
+  brightness: "Bright"
+};
+
 export class Visualizer {
   private readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
+  private readonly meters: Record<(typeof METER_KEYS)[number], HTMLElement>;
   private reducedMotion = false;
   private phase = 0;
 
@@ -15,6 +26,25 @@ export class Visualizer {
     this.canvas.setAttribute("role", "img");
     this.canvas.setAttribute("aria-label", "Live road horizon responding to speed and weather");
     container.appendChild(this.canvas);
+
+    const meters = document.createElement("div");
+    meters.className = "mix-meters";
+    meters.setAttribute("aria-hidden", "true");
+    meters.innerHTML = METER_KEYS.map(
+      (key) =>
+        `<label><span>${METER_LABELS[key]}</span><span class="meter"><i data-meter="${key}"></i></span></label>`
+    ).join("");
+    container.appendChild(meters);
+
+    const meterMap = {} as Record<(typeof METER_KEYS)[number], HTMLElement>;
+    for (const key of METER_KEYS) {
+      const bar = meters.querySelector<HTMLElement>(`[data-meter="${key}"]`);
+      if (!bar) {
+        throw new Error(`Missing mix meter ${key}`);
+      }
+      meterMap[key] = bar;
+    }
+    this.meters = meterMap;
 
     const context = this.canvas.getContext("2d");
     if (!context) {
@@ -28,10 +58,27 @@ export class Visualizer {
   }
 
   render(frame: FeatureFrame, mix: MixState): void {
+    this.meters.energy.style.width = `${Math.round(clamp01(mix.energy) * 100)}%`;
+    this.meters.density.style.width = `${Math.round(clamp01(mix.density) * 100)}%`;
+    this.meters.crunch.style.width = `${Math.round(clamp01(mix.crunch) * 100)}%`;
+    this.meters.rain.style.width = `${Math.round(clamp01(mix.rain) * 100)}%`;
+    this.meters.brightness.style.width = `${Math.round(clamp01(mix.brightness) * 100)}%`;
+
+    const rect = this.canvas.getBoundingClientRect();
+    if (rect.width < 2 || rect.height < 2) {
+      return;
+    }
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const width = Math.max(1, Math.round(rect.width * dpr));
+    const height = Math.max(1, Math.round(rect.height * dpr));
+    if (this.canvas.width !== width || this.canvas.height !== height) {
+      this.canvas.width = width;
+      this.canvas.height = height;
+    }
+
     const ctx = this.ctx;
-    const width = this.canvas.width;
-    const height = this.canvas.height;
     const speed = clamp01((frame.speedMps ?? 0) / 33);
+    const unit = width / 1200;
     const horizon = height * (0.47 + mix.tunnel * 0.04);
     if (!this.reducedMotion) {
       this.phase = (this.phase + 0.012 + speed * 0.055) % 1;
@@ -53,10 +100,11 @@ export class Visualizer {
 
     ctx.fillStyle = "#090d16";
     ctx.beginPath();
-    ctx.moveTo(0, horizon + 25);
-    for (let x = 0; x <= width; x += 80) {
-      const ridge = Math.sin(x * 0.021 + 1.4) * 18 + Math.sin(x * 0.008) * 26;
-      ctx.lineTo(x, horizon - 2 - ridge);
+    ctx.moveTo(0, horizon + 25 * unit);
+    for (let x = 0; x <= width; x += Math.max(20, 80 * unit)) {
+      const ridge =
+        Math.sin(x / unit * 0.021 + 1.4) * 18 * unit + Math.sin(x / unit * 0.008) * 26 * unit;
+      ctx.lineTo(x, horizon - 2 * unit - ridge);
     }
     ctx.lineTo(width, height);
     ctx.lineTo(0, height);
@@ -72,24 +120,32 @@ export class Visualizer {
     ctx.closePath();
     ctx.fill();
 
+    ctx.strokeStyle = "rgba(226, 232, 244, 0.28)";
+    ctx.lineWidth = Math.max(1, 2 * unit);
+    ctx.beginPath();
+    ctx.moveTo(width * 0.43, horizon);
+    ctx.lineTo(width * 0.06, height);
+    ctx.moveTo(width * 0.57, horizon);
+    ctx.lineTo(width * 0.94, height);
+    ctx.stroke();
+
     ctx.strokeStyle = "rgba(211,222,255,0.7)";
-    ctx.lineWidth = 4;
     for (let index = 0; index < 7; index += 1) {
       const progress = (index / 7 + this.phase) % 1;
       const eased = progress * progress;
       const y = horizon + eased * (height - horizon);
       const nextProgress = Math.min(1, progress + 0.075);
       const nextY = horizon + nextProgress * nextProgress * (height - horizon);
-      const x = width * 0.5 + (progress - 0.5) * 2;
+      ctx.lineWidth = Math.max(1, (1.4 + eased * 5.5) * unit);
       ctx.beginPath();
-      ctx.moveTo(x, y);
+      ctx.moveTo(width * 0.5, y);
       ctx.lineTo(width * 0.5, nextY);
       ctx.stroke();
     }
 
     const rainDrops = Math.round(mix.rain * 34);
     ctx.strokeStyle = `rgba(151,190,255,${0.2 + mix.rain * 0.48})`;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = Math.max(1, 2 * unit);
     for (let index = 0; index < rainDrops; index += 1) {
       const seed = (index * 83.13) % 997;
       const x = (seed / 997) * width;
@@ -105,14 +161,5 @@ export class Visualizer {
       ctx.fillStyle = `rgba(0,0,0,${shade})`;
       ctx.fillRect(0, 0, width, height);
     }
-
-    ctx.fillStyle = "rgba(4,7,14,0.64)";
-    ctx.fillRect(24, 22, 260, 66);
-    ctx.fillStyle = "#f2f5ff";
-    ctx.font = "700 27px system-ui, sans-serif";
-    ctx.fillText(`${Math.round((frame.speedMps ?? 0) * 2.23694)} MPH`, 42, 60);
-    ctx.fillStyle = "#9fb3d5";
-    ctx.font = "600 15px system-ui, sans-serif";
-    ctx.fillText(`${mix.section.toUpperCase()} · ${Math.round(mix.bpm)} BPM`, 42, 82);
   }
 }
