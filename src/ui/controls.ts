@@ -57,6 +57,35 @@ export const PRESET_LABELS: Array<{ id: SimulatorPresetId; label: string; note: 
 
 const formatSimValue = (value: number, digits = 1): string => value.toFixed(digits);
 
+const formatHour = (hour: number): string => {
+  const totalMinutes = Math.round(hour * 60);
+  const hours = Math.floor(totalMinutes / 60) % 24;
+  const minutes = totalMinutes % 60;
+  const suffix = hours >= 12 ? "PM" : "AM";
+  const hour12 = hours % 12 || 12;
+  return `${hour12}:${minutes.toString().padStart(2, "0")} ${suffix}`;
+};
+
+const formatLux = (lux: number): string => {
+  if (lux >= 10000) {
+    return `${Math.round(lux / 1000)}k lux`;
+  }
+  if (lux >= 1000) {
+    return `${(lux / 1000).toFixed(1)}k lux`;
+  }
+  return `${Math.round(lux)} lux`;
+};
+
+const assignRange = (input: HTMLInputElement, value: number): void => {
+  if (document.activeElement === input) {
+    return;
+  }
+  const next = String(value);
+  if (input.value !== next) {
+    input.value = next;
+  }
+};
+
 export const createControls = (
   container: HTMLElement,
   callbacks: ControlsCallbacks,
@@ -69,21 +98,14 @@ export const createControls = (
       <p>Drive studio</p>
     </header>
 
-    <section class="mode-panel control-card">
-      <div class="section-heading compact">
-        <div>
-          <p class="eyebrow">Input</p>
-          <h2>Choose your road</h2>
-        </div>
+    <section class="transport control-card">
+      <div class="command-row">
         <div class="mode-row" role="group" aria-label="Input mode">
           <button class="mode-btn" data-mode="live" type="button"><span class="mode-dot"></span>Live</button>
           <button class="mode-btn" data-mode="sim" type="button"><span class="mode-dot"></span>Simulator</button>
         </div>
+        <p class="status-line" id="status-line" aria-live="polite">Ready for the road.</p>
       </div>
-      <p class="status-line" id="status-line" aria-live="polite">Ready for the road.</p>
-    </section>
-
-    <section class="transport control-card">
       <button id="transport-score" class="transport-button" type="button">
         <span class="transport-icon" aria-hidden="true">▶</span>
         <span class="transport-copy"><b>Start score</b><small>Audio begins on your tap</small></span>
@@ -98,15 +120,16 @@ export const createControls = (
       <div class="section-heading compact">
         <div>
           <p class="eyebrow">Simulator</p>
-          <h2>Put the score somewhere</h2>
+          <h2>Road presets</h2>
         </div>
-        <span class="key-hint">Keys 1–9</span>
+        <span class="key-hint">Keys 1-9</span>
       </div>
+      <p class="sim-locked-note">Switch to Simulator to use presets, sliders, and the 90 second timeline.</p>
       <div class="preset-grid">
         ${PRESET_LABELS.map(
           (preset, index) => `
             <button type="button" class="preset-btn" data-preset="${preset.id}">
-              <span>${index < 9 ? index + 1 : ""}</span>
+              <span>${index + 1}</span>
               <b>${preset.label}</b>
               <small>${preset.note}</small>
             </button>`
@@ -144,7 +167,7 @@ export const createControls = (
         <span class="summary-plus" aria-hidden="true">+</span>
       </summary>
       <div class="settings-content">
-        <label><span>Master volume</span><input id="master-volume" type="range" min="0" max="1" step="0.01" value="${settings.masterVolume}" /></label>
+        <label><span>Master volume <b id="volume-value">${Math.round(settings.masterVolume * 100)}%</b></span><input id="master-volume" type="range" min="0" max="1" step="0.01" value="${settings.masterVolume}" /></label>
         <label class="check-row"><span><b>Hold key</b><small>Keep one tonal center for the session</small></span><input id="hold-key" type="checkbox" ${settings.holdKey ? "checked" : ""} /></label>
         <label class="check-row"><span><b>Reduced motion</b><small>Stop road and rain animation</small></span><input id="reduced-motion" type="checkbox" ${settings.reducedMotion ? "checked" : ""} /></label>
       </div>
@@ -169,6 +192,7 @@ export const createControls = (
   const simPanel = required<HTMLElement>("#sim-panel");
   const statusLine = required<HTMLElement>("#status-line");
   const masterVolumeInput = required<HTMLInputElement>("#master-volume");
+  const volumeValue = required<HTMLElement>("#volume-value");
   const holdKeyInput = required<HTMLInputElement>("#hold-key");
   const reducedMotionInput = required<HTMLInputElement>("#reduced-motion");
   const speedInput = required<HTMLInputElement>("#sim-speed");
@@ -205,9 +229,10 @@ export const createControls = (
     });
   }
 
-  masterVolumeInput.addEventListener("input", () =>
-    callbacks.onMasterVolume(Number(masterVolumeInput.value))
-  );
+  masterVolumeInput.addEventListener("input", () => {
+    volumeValue.textContent = `${Math.round(Number(masterVolumeInput.value) * 100)}%`;
+    callbacks.onMasterVolume(Number(masterVolumeInput.value));
+  });
   holdKeyInput.addEventListener("change", () => callbacks.onHoldKey(holdKeyInput.checked));
   reducedMotionInput.addEventListener("change", () =>
     callbacks.onReducedMotion(reducedMotionInput.checked)
@@ -269,15 +294,15 @@ export const createControls = (
   };
 
   const syncSimulatorState = (state: SimulatorState): void => {
-    speedInput.value = state.speedMps.toString();
-    rainInput.value = state.precipMmHr.toString();
-    luxInput.value = state.lux.toString();
-    hourInput.value = state.hourLocal.toString();
-    timelineInput.value = state.timelineSec.toString();
+    assignRange(speedInput, state.speedMps);
+    assignRange(rainInput, state.precipMmHr);
+    assignRange(luxInput, state.lux);
+    assignRange(hourInput, state.hourLocal);
+    assignRange(timelineInput, state.timelineSec);
     speedValue.textContent = `${formatSimValue(state.speedMps * 2.23694, 0)} mph`;
     rainValue.textContent = `${formatSimValue(state.precipMmHr, 1)} mm/h`;
-    luxValue.textContent = `${formatSimValue(state.lux, 0)} lux`;
-    hourValue.textContent = formatSimValue(state.hourLocal, 1);
+    luxValue.textContent = formatLux(state.lux);
+    hourValue.textContent = formatHour(state.hourLocal);
     timelineValue.textContent = `${formatSimValue(state.timelineSec, 0)}s`;
     timelineButton.dataset.playing = state.timelinePlaying ? "true" : "false";
     timelineButton.textContent = state.timelinePlaying ? "Pause timeline" : "Play timeline";
