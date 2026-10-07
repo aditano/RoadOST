@@ -145,4 +145,4 @@ The production build is a static Vite site deployed by GitHub Actions to GitHub 
 
 ## License
 
-MIT. See [LICENSE](./LICENSE).
+Copyright 2026 Anthony DiTano. GNU GPL v3.0 or later. See [LICENSE](./LICENSE).
