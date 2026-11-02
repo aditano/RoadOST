@@ -106,7 +106,7 @@ export const createControls = (
         </div>
         <p class="status-line" id="status-line" aria-live="polite">Ready for the road.</p>
       </div>
-      <button id="transport-score" class="transport-button" type="button">
+      <button id="transport-score" class="transport-button" type="button" aria-pressed="false">
         <span class="transport-icon" aria-hidden="true">▶</span>
         <span class="transport-copy"><b>Start score</b><small>Audio begins on your tap</small></span>
       </button>
@@ -152,8 +152,8 @@ export const createControls = (
       </div>
 
       <div class="timeline-control">
-        <div class="timeline-label"><span>90 second drive</span><b id="timeline-value"></b></div>
-        <input id="sim-timeline" type="range" min="0" max="${SIM_TIMELINE_DURATION_SECONDS}" step="0.1" />
+        <div class="timeline-label" id="timeline-label"><span>90 second drive</span><b id="timeline-value"></b></div>
+        <input id="sim-timeline" type="range" min="0" max="${SIM_TIMELINE_DURATION_SECONDS}" step="0.1" aria-labelledby="timeline-label" />
         <div class="sim-actions">
           <button id="timeline-play" type="button">Play timeline</button>
           <button id="tunnel-trigger" type="button">Trigger tunnel</button>
@@ -265,6 +265,7 @@ export const createControls = (
   const setRunning = (running: boolean): void => {
     runningState = running;
     transportButton.classList.toggle("is-running", running);
+    transportButton.setAttribute("aria-pressed", String(running));
     transportIcon.textContent = running ? "■" : "▶";
     transportTitle.textContent = running ? "Stop score" : "Start score";
     transportDetail.textContent = running ? "End drive and open recap" : "Audio begins on your tap";

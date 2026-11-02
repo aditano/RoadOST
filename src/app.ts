@@ -91,7 +91,7 @@ const landingMarkup = `
     <nav class="landing-nav" aria-label="Primary navigation">
       <a class="brand" href="${import.meta.env.BASE_URL}" aria-label="RoadOST home">Road<span>OST</span></a>
       <div class="nav-actions">
-        <a href="https://github.com/aditano/RoadOST" target="_blank" rel="noreferrer">GitHub</a>
+        <a href="https://github.com/aditano/RoadOST" target="_blank" rel="noreferrer" aria-label="RoadOST on GitHub (opens in a new tab)">GitHub</a>
         <button id="nav-open-studio" type="button">Open studio</button>
       </div>
     </nav>
@@ -189,7 +189,7 @@ const landingMarkup = `
     <footer class="landing-footer">
       <a class="brand" href="${import.meta.env.BASE_URL}">Road<span>OST</span></a>
       <p>Sensor honesty: availability varies by browser. Missing inputs are labeled and never presented as live.</p>
-      <div><a href="https://github.com/aditano/RoadOST" target="_blank" rel="noreferrer">GitHub</a><span>GPL-3.0-or-later</span></div>
+      <div><a href="https://github.com/aditano/RoadOST" target="_blank" rel="noreferrer" aria-label="RoadOST on GitHub (opens in a new tab)">GitHub</a><span>GPL-3.0-or-later</span></div>
     </footer>
   </main>
 `;
