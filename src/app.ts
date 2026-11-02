@@ -189,7 +189,7 @@ const landingMarkup = `
     <footer class="landing-footer">
       <a class="brand" href="${import.meta.env.BASE_URL}">Road<span>OST</span></a>
       <p>Sensor honesty: availability varies by browser. Missing inputs are labeled and never presented as live.</p>
-      <div><a href="https://github.com/aditano/RoadOST" target="_blank" rel="noreferrer">GitHub</a><span>MIT License</span></div>
+      <div><a href="https://github.com/aditano/RoadOST" target="_blank" rel="noreferrer">GitHub</a><span>GPL-3.0-or-later</span></div>
     </footer>
   </main>
 `;
