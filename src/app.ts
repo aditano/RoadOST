@@ -282,6 +282,7 @@ export const mountApp = (root: HTMLElement): void => {
     let latestMix: MixState = mapper.update(latestFrame);
     let mode: BusMode = route.sim || route.demo || route.preset ? "sim" : "live";
     let running = false;
+    let finishing = false;
     let demoPending = route.demo;
     let missingGeoFrames = 0;
     let animationFrame = 0;
@@ -313,19 +314,35 @@ export const mountApp = (root: HTMLElement): void => {
     });
 
     const finishSession = (): void => {
-      if (!running) {
+      if (!running || finishing) {
         return;
       }
-      const recap = tracker.finish(latestFrame, latestMix);
-      persistRecap(recap);
-      recapPanel.render(recap);
       running = false;
-      recorder.stop();
-      engine.stop();
+      finishing = true;
       controls.setRunning(false);
       controls.setDriving(false);
-      controls.setStatusText("Score stopped. Your recap is ready.");
-      recapRoot.scrollIntoView({ behavior: settings.reducedMotion ? "auto" : "smooth", block: "start" });
+      void (async () => {
+        let saved = false;
+        try {
+          saved = await recorder.stopAndSave();
+        } catch {
+          recorder.discard();
+        }
+        engine.stop();
+        const recap = tracker.finish(latestFrame, latestMix);
+        persistRecap(recap);
+        recapPanel.render(recap);
+        finishing = false;
+        controls.setStatusText(
+          saved
+            ? "Score stopped. Drive audio saved and recap is ready."
+            : "Score stopped. Your recap is ready."
+        );
+        recapRoot.scrollIntoView({
+          behavior: settings.reducedMotion ? "auto" : "smooth",
+          block: "start"
+        });
+      })();
     };
 
     const setMode = (nextMode: BusMode): void => {
@@ -342,7 +359,7 @@ export const mountApp = (root: HTMLElement): void => {
       {
         onStart: () => {
           void (async () => {
-            if (running) {
+            if (running || finishing) {
               return;
             }
             if (mode === "live") {
@@ -532,7 +549,7 @@ export const mountApp = (root: HTMLElement): void => {
 
     return () => {
       if (running) {
-        recorder.stop();
+        recorder.discard();
       }
       dismissOnboarding?.();
       window.cancelAnimationFrame(animationFrame);
