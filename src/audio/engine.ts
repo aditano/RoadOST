@@ -34,7 +34,12 @@ export class RoadOstEngine {
   }
 
   async start(): Promise<void> {
+    // Unlock AudioContext on the user gesture path (required on iOS Safari).
     await Tone.start();
+    const rawContext = Tone.getContext().rawContext as AudioContext;
+    if (rawContext.state === "suspended") {
+      await rawContext.resume();
+    }
     if (this.started) {
       return;
     }
